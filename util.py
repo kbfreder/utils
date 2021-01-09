@@ -1,22 +1,19 @@
 import pickle
 import numpy as np
 import pandas as pd
-import datetime as dt
-from dateutil.relativedelta import relativedelta as rd
-from calendar import monthrange as mr
 
 
-def pkl_this(filename, df):
+def pkl_save(filename, df):
     '''Saves df as filename. Must include .pkl extension'''
     with open(filename, 'wb') as picklefile:
         pickle.dump(df, picklefile)
 
-def open_pkl(filename):
+
+def pkl_open(filename):
     '''Must include .pkl extension. Returns same object as original.
     '''
     with open(filename,'rb') as picklefile:
         return pickle.load(picklefile)
-
 
 
 def num_not_zero(data):
@@ -29,19 +26,6 @@ def trimmed_mean(data, ptile=95):
     cutoff = np.percentile(data, ptile)
     trimmed_data = data[data <= cutoff].dropna()
     return np.mean(trimmed_data)
-
-def pos_lpc(df, lpc_col = 'LATE_CHARGE'):
-    return df[df[lpc_col] >= 0]
-
-def non_neg_lpc(df, lpc_col = 'LATE_CHARGE'):
-    return df[df[lpc_col] >= 0]
-
-def fix_nan_lpc(row):
-    next_lpc = row['NEXT_INV_LPC']
-    if np.isnan(next_lpc) & (row['BILL_DATE'] <= dt.datetime.today() - dt.timedelta(days=30)):
-        return 0
-    else:
-        return next_lpc
 
 
 def check_dup_cols(df, col_name, suffixes):
@@ -56,36 +40,6 @@ def check_dup_cols(df, col_name, suffixes):
 
 def df_rel_lens(df1, df2):
     return len(df1), len(df2), len(df1)/len(df2)
-
-
-def date_months_prior(n):
-        '''Return datetime object x months prior from today
-        rounded to first day of month'''
-        t = dt.datetime.today()
-        exact_dt = t - rd(months=n)
-        return dt.datetime(exact_dt.year, exact_dt.month, 1)
-
-
-def last_months_last_day():
-        '''Return datetime object for last day of previous month
-        
-                Ex: today = 2019-06-15
-                
-                last_months_last_day()
-                >>> Timestamp (2019, 5, 31)
-        '''
-        t = dt.datetime.today()
-        m = t.month
-        y = t.year
-        if m == 1:
-                y -= 1
-                m = 12
-        else:
-                m -= 1
-        
-        d = mr(y, m)[1]
-
-        return dt.datetime(y, m, d)
 
 
 def find_val_in_df(val, df):
@@ -197,37 +151,3 @@ def write_to_excel(filename, df1, sheetname1, index_bool1, *args):
                 sheetnamex = t[1]
                 index_boolx = t[2]
                 dfx.to_excel(writer, sheet_name=sheetnamex, index=index_boolx)
-
-
-def get_project_path():
-    '''Return path of project folder
-        assuming cookiecutter structure, this is two folders "up"
-    
-    Note, calling notebook must have run `import os`
-    '''
-    import os
-    return os.path.dirname(os.path.dirname(os.path.abspath(os.path.curdir)))
-
-def get_save_path():
-    import os
-
-    # set save path for queries
-    cwd = os.getcwd()
-    if '/' in cwd:
-        char = '/'
-    else:
-        char = '\\'
-
-    path_keyword = os.getcwd().split(char)[-2]
-
-    try:
-        if path_keyword == 'src' or path_keyword == 'notebooks':
-        # cookiecutter folder structure
-            save_path = '../../data/raw/'
-        else:
-        # KF's old folder structure
-            save_path = 'Data/'
-    except IndexError:
-        save_path = 'Data/'
-    
-    return save_path
